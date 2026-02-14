@@ -12,21 +12,19 @@ env:
     MONGO_PASSWORD: ${{secrets.MONGO_PASSWORD}}
     
 jobs:
-    unit-testing:
+      unit-testing:
         name: Unit Testing
-        strategy:
-          matrix:
-            os: [ubuntu-latest]
-            nodejs_version: [18, 20]
-        runs-on: ${{ matrix.os }}
+        runs-on: ubuntu-latest
+        container: 
+          image: node:20
         steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
 
-        - name: setup NodeJs Version
-          uses: actions/setup-node@v4
-          with:
-            node-version: ${{matrix.nodejs_version}}
+        #- name: setup NodeJs Version
+        # uses: actions/setup-node@v4
+         # with:
+          #  node-version: 20
 
         - name: cache NPM dependencies
           uses: actions/cache@v4
@@ -102,6 +100,7 @@ jobs:
         push: true
         tags: 'ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}'
     
+
 
 
 
