@@ -163,8 +163,6 @@ jobs:
             run: |
               kubectl apply -f kuben=rnetes/develpoment/*.yaml
 
-              
-
 
 
 
