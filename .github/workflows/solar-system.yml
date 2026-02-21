@@ -132,6 +132,8 @@ jobs:
             with:
               method: kubeconfig
               kubeconfig: ${{secrets.KUBECONFIG}}
+
+              
             
           - name: fetch kubernetes Cluster Details
             run: |
