@@ -118,6 +118,8 @@ jobs:
       
       dev-deploy:
         needs: docker
+        outputs:
+          APP_INGRESS_URL: ${{steps.set-ingress-host-address.outputs.APP_INGRESS_HOST}}
         runs-on: self-hosted
         steps:
           - name: Checkout repo
@@ -132,9 +134,7 @@ jobs:
             uses: azure/k8s-set-context@v4
             with:
               method: kubeconfig
-              kubeconfig: ${{secrets.KUBECONFIG}}
-
-              
+              kubeconfig: ${{secrets.KUBECONFIG}}  
             
           - name: fetch kubernetes Cluster Details
             run: |
@@ -168,14 +168,29 @@ jobs:
 
           - name: Create MongoDB Secret
             run: | 
-              kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds --from-literal=MONGO_URI=${{ env.MONGO_URI }} --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} --save-config --dry-run=client -o yaml | kubectl apply -f -
-            
+              kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds --from-literal=MONGO_URI=${{ env.MONGO_URI }} --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} --save-config --dry-run=client -o yaml | kubectl apply -f -   
 
           - name: Deploy to Dev Env
             run: |
               kubectl apply -f kubernetes/development
 
-              
+          - name: Set App Ingress Host URL
+            id: set-ingress-host-address
+            run: |
+                echo "APP_INGRESS_HOST=$(kubectl -n ${{vars.NAMESPACE}} get ingress -o jsonpath="{.item[0].spec.tls[0].hosts[0]}")" >>  "$GITHUB_ENV"
+
+      Integration-Testing :
+        name: Dev Integration Testing
+        needs: dev-deploy
+        runs-on: ubuntu-latest
+        steps:
+          - name: Test URL output using CURL and JQ
+            env:
+              URL: ${{needs.dev-deploy.outputs.APP_INGRESS_URL}}
+            run: |
+              echo $URL
+              echo "---------------------"
+              curl https://$URL/live -s -k | jq -r .status | grep -i live
               
 
 
